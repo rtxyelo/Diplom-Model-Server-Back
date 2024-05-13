@@ -1,68 +1,176 @@
-import cv2
+"""Import libraries"""
+
+print('Import libraries...')
+
 import socket
-import threading
-# from threading import Thread
 
-class ServerSocket:
+import base64
 
-    def __init__(self, ip, port):
-        self.TCP_IP = ip
-        self.TCP_PORT = port
-        self.socketOpen()
-        self.receiveThread = threading.Thread(target=self.receiveImages)
-        self.receiveThread.start()
+import os
+import cv2
 
-    def socketClose(self):
-        self.sock.close()
-        print(u'Server socket [ TCP_IP: ' + self.TCP_IP + ', TCP_PORT: ' + str(self.TCP_PORT) + ' ] is close')
+import sys
+sys.path.insert(0, '../toolkit')
 
-    def socketOpen(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind((self.TCP_IP, self.TCP_PORT))
-        self.sock.listen(1)
-        print(u'Server socket [ TCP_IP: ' + self.TCP_IP + ', TCP_PORT: ' + str(self.TCP_PORT) + ' ] is open')
-        self.conn, self.addr = self.sock.accept()
-        print(u'Server socket [ TCP_IP: ' + self.TCP_IP + ', TCP_PORT: ' + str(self.TCP_PORT) + ' ] is connected with client')
+import PreprocessData as prepr_data
+import GeneratePrediction as gen_predict
 
-    def receiveImages(self):
+print('Libraries are imported...')
+                
+              
+"""Import pretarined model"""
+model = gen_predict.Model()
 
-        try:
-            while True:
-                length = self.recvall(self.conn, 64)
-                length1 = length.decode('utf-8')
-                stringData = self.recvall(self.conn, int(length1))
-                stime = self.recvall(self.conn, 64)
-                print('send time: ' + stime.decode('utf-8'))
-                print('send time: ' + stime.decode('cp1251'))
-                now = time.localtime()
-                print('receive time: ' + datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'))
-                data = numpy.frombuffer(base64.b64decode(stringData), numpy.uint8)
-                decimg = cv2.imdecode(data, 1)
-                cv2.imshow("image", decimg)
-                cv2.waitKey(1)
-        except Exception as e:
-            print(e)
-            self.socketClose()
-            cv2.destroyAllWindows()
-            self.socketOpen()
-            self.receiveThread = threading.Thread(target=self.receiveImages)
-            self.receiveThread.start()
 
-    def recvall(self, sock, count):
-        buf = b''
-        while count:
-            newbuf = sock.recv(count)
-            if not newbuf: return None
-            buf += newbuf
-            count -= len(newbuf)
-        return buf
+"""Default config"""
+img_size = 1024
+blur_value = 0
+exposure_values = [0.45, 50]
 
-def main():
+row_threshold=0.01, 
+space_threshold=0.02
+
+recieve_img = 'received_image.jpg'
+
+
+"""Preprocess image class"""
+preprocess = prepr_data.Preprocessing(img_size, blur_value, exposure_values)
+
+
+print('Readry to predict...')
+
+
+def send_audio(conn, filename='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/app/voice/result_voice.wav'):
+    with open(filename, 'rb') as f:
+        # Определение размера файла
+        file_size = os.path.getsize(filename)
+        print("Voice size ", file_size)
+        
+        # Отправка размера файла
+        audio_size_bytes = file_size.to_bytes(4, byteorder='little')
+        conn.sendall(audio_size_bytes)
+
+        good_answer = 0
+        while good_answer == 0:
+            good_answer_bytes = conn.recv(4)  # Предполагается, что размер передается как 4 байта (int32)
+            good_answer = int.from_bytes(good_answer_bytes, byteorder='little')
+            print("Answer ", good_answer)
+            if good_answer == 1:
+                break
+            else:
+                conn.sendall(audio_size_bytes)
+                print("Voice size in bytes ", audio_size_bytes)
+
+
+        # Отправка размера файла
+        #audio_size_bytes = file_size.to_bytes(4, byteorder='little')
+        #conn.sendall(audio_size_bytes)
+        #print("Voice size in bytes ", audio_size_bytes)
+
+        # Отправка аудио данных
+        send_size = 0
+        while send_size < file_size:
+            data = f.read(1024)
+            #print("Voice data ", len(data))
+            if not data:
+                break
+            conn.sendall(data)
+            send_size += len(data)
+
+
+def handle_client_connection(conn, addr):
+    try:
+
+        # Получение размера изображения
+        size_bytes = conn.recv(4)  # Предполагается, что размер передается как 4 байта (int32)
+        image_size = int.from_bytes(size_bytes, byteorder='little')  # Преобразование байт в число
+        print("image_size ", image_size)
+
+        # Получение самого изображения
+        received_size = 0
+        with open(recieve_img, 'wb') as file:
+            while received_size < image_size:
+                data = conn.recv(1024)
+                if not data:
+                    break
+                file.write(data)
+                received_size += len(data)
+            print("received_size ", received_size)
+
+        # Чтение изображения из записанной директории
+        if os.path.exists(recieve_img):
+            image = cv2.imread(recieve_img, cv2.IMREAD_UNCHANGED)
+
+            # Предподготовка полученного изображения
+            prepr_data.Preprocessing(img_size, blur_value, exposure_values).preprocess_image(image)
+
+            # Предсказание модели (сырое)
+            prediction = model.predict()
+
+            # Обработанное предсказание модели
+            result_text = gen_predict.MakeResultFromPrediction(prediction).voice_prediction()
+
+            print("Result ", len(result_text), " ", result_text)
+
+            # Отправка текста клиенту
+            conn.sendall(result_text.encode())
+            print('Text sent successfully!')
+
+            # Отправка звука клиенту
+            send_audio(conn)
+            print('Sound sent successfully!')
+            
+        else:
+            print('Image file not found!')
+            
+    except Exception as e:
+        print('Error with client:', e)
+
+
+def open_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     hostname = socket.gethostname()
-    #hostname = "192.168.0.17"
-    print("HOST name ", hostname)
     port = 12345
-    server = ServerSocket(hostname, port)
+    server.bind((hostname, port))
+    server.listen(2)
+    print('Server is working...')
 
-if __name__ == "__main__":
-    main()
+    conn, addr = server.accept()
+    print('Client is connected...')
+
+    return conn, addr
+
+
+def close_server(server):
+    server.close()
+    print("Server closed.")
+
+
+
+def start_server():
+    try:
+        while True:
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            hostname = socket.gethostname()
+            port = 12345
+            server.bind((hostname, port))
+            server.listen(1)
+            print('Server is working...')
+
+            conn, addr = server.accept()
+            print('Client is connected...')
+
+            #conn, addr, server = open_server()
+            handle_client_connection(conn, addr)
+            #close_server(server)
+
+            server.close()
+            print("Server closed.")
+
+    except Exception as e:
+        print('Error with server:', e)
+
+
+
+if __name__ == '__main__':
+    start_server()
