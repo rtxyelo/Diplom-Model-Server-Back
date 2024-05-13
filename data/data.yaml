@@ -1,0 +1,63 @@
+path: C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/data/
+
+train: train/images
+val: valid/images
+test: test/images
+
+names: 
+  0: d_0
+  1: d_00
+  2: d_1
+  3: d_13
+  4: d_14
+  5: d_17
+  6: d_2
+  7: d_20
+  8: d_22
+  9: d_26
+  10: d_262
+  11: d_3
+  12: d_36
+  13: d_4
+  14: d_40
+  15: d_8
+  16: d_86
+  17: d_863
+  18: d_9
+  19: a
+  20: b
+  21: c
+  22: ch
+  23: d
+  24: defis
+  25: dvoetochie
+  26: e
+  27: f
+  28: g
+  29: gh
+  30: i
+  31: iKratkoe
+  32: ii
+  33: k
+  34: kavichki1
+  35: kavichki2
+  36: l
+  37: m
+  38: myagkiy
+  39: _n
+  40: o
+  41: p
+  42: r
+  43: s
+  44: sh
+  45: skobka
+  46: t
+  47: tochka
+  48: u
+  49: v
+  50: x
+  51: _y
+  52: ya
+  53: yo
+  54: z
+  55: zapyataya
