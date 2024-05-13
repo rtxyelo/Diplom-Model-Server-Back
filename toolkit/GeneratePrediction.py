@@ -18,11 +18,11 @@ import pyttsx3
 class Model:
     """Initialize trained model"""
     def __init__(self, trained_model_name='yolov8m5_BEST_V2'):
-        self.model_path = f'C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/network/runs/detect/{trained_model_name}/weights/best.pt'
+        self.model_path = f'C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom-Model-Server-Back/network/runs/detect/{trained_model_name}/weights/best.pt'
         self.model = YOLO(self.model_path)
 
     """Predict function"""
-    def predict(self, image_path='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/test/test/prepr_imgs', 
+    def predict(self, image_path='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom-Model-Server-Back/test/test/prepr_imgs', 
                 image_name='prepr_img', 
                 image_format='jpg',
                 augment=True, 
@@ -51,7 +51,7 @@ class Model:
 """Result from Model.prediction class"""
 class MakeResultFromPrediction:
     """Initialize class"""
-    def __init__(self, prediction, path_to_symbol_map='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/data/data.yaml', row_threshold=0.01, space_threshold=0.02):
+    def __init__(self, prediction, path_to_symbol_map='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom-Model-Server-Back/data/data.yaml', row_threshold=0.01, space_threshold=0.02):
         self.symbol_map = load_symbol_map(path_to_symbol_map)
         self.prediction = prediction
         self.boxes = self.prediction[0].boxes
@@ -87,7 +87,7 @@ class MakeResultFromPrediction:
         return text
 
     """Voice text prediction"""
-    def voice_prediction(self, voice_name='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/app/voice/result_voice', voice_text=False):
+    def voice_prediction(self, voice_name='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom-Model-Server-Back/app/voice/result_voice', voice_text=False):
         text = self.text_prediction()
         
         engine = pyttsx3.init()

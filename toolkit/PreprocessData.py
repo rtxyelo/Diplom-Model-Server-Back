@@ -55,6 +55,6 @@ class Preprocessing:
 
         return self.result_image
 
-    def save_to_dir(self, image_path='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/test/test/prepr_imgs', image_name='prepr_img', image_format='jpg'):
+    def save_to_dir(self, image_path='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom-Model-Server-Back/test/test/prepr_imgs', image_name='prepr_img', image_format='jpg'):
         """Save preprocessed image to directory"""
         cv2.imwrite(os.path.join(image_path, f'{image_name}.{image_format}'), self.result_image)
