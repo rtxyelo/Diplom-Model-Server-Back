@@ -40,7 +40,7 @@ preprocess = prepr_data.Preprocessing(img_size, blur_value, exposure_values)
 print('Readry to predict...')
 
 
-def send_audio(conn, filename='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom/app/voice/result_voice.wav'):
+def send_audio(conn, filename='C:/Users/greyb/OneDrive/Desktop/Potok/Study/Diplom-Model-Server-Back/app/voice/result_voice.wav'):
     with open(filename, 'rb') as f:
         # Определение размера файла
         file_size = os.path.getsize(filename)
